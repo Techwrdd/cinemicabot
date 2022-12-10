@@ -13,6 +13,10 @@ from database.ia_filterdb import Media
 from database.users_chats_db import db
 from info import SESSION, API_ID, API_HASH, BOT_TOKEN, LOG_STR
 from utils import temp
+from aiohttp import web
+from os import environ
+
+PORT = environ.get("PORT" , "8080")
 
 class Bot(Client):
 
@@ -40,6 +44,20 @@ class Bot(Client):
         self.username = '@' + me.username
         logging.info(f"{me.first_name} with for Pyrogram v{__version__} (Layer {layer}) started on {me.username}.")
         logging.info(LOG_STR)
+        app = web.AppRunner(await web_server())
+        await app.setup()
+        bind_address = "0.0.0.0"
+        await web.TCPSite(app, bind_address, PORT).star()
+        
+async def web_server():
+    web_app = web.Application(client_max_size=30000000 )
+    web_app.add_routes(routes)
+    return web_app
+
+routes = web.RouteTableDef()
+@routes.get("/", allow_head=True)
+async def root_route_handler(request):
+    return web.json_response(""testbot)
 
     async def stop(self, *args):
         await super().stop()
